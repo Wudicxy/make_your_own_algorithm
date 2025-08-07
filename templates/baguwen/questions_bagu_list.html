@@ -1,0 +1,213 @@
+{% extends 'baguwen/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-header">筛选条件</div>
+            <div class="card-body">
+                <form method="get">
+                    <div class="mb-3">
+                        <input type="text" name="search" class="form-control"
+                               placeholder="搜索题目..." value="{{ search_query }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <select name="category" class="form-select">
+                            <option value="">全部分类</option>
+                            {% for category in categories %}
+                                <option value="{{ category.id }}"
+                                    {% if category.id|stringformat:"s" == selected_category %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <select name="difficulty" class="form-select">
+                            <option value="">全部难度</option>
+                            {% for difficulty in difficulties %}
+                                <option value="{{ difficulty.id }}"
+                                    {% if difficulty.id|stringformat:"s" == selected_difficulty %}selected{% endif %}>
+                                    {{ difficulty.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">筛选</button>
+                    <a href="{% url 'baguwen:question_list' %}" class="btn btn-secondary">重置</a>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-9">
+        <h2>八股文题目列表</h2>
+
+        {% for question in page_obj %}
+            <div class="card question-card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <a href="{% url 'baguwen:question_detail' question.pk %}" class="text-decoration-none">
+                            {{ question.title }}
+                        </a>
+                    </h5>
+                    <p class="card-text text-muted">{{ question.content|truncatewords:30 }}</p>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge bg-secondary">{{ question.category.name }}</span>
+                            <span class="badge bg-info difficulty-{{ question.difficulty.level }}">
+                                {{ question.difficulty.name }}
+                            </span>
+                            {% for tag in question.get_tags_list %}
+                                <span class="tag">{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+                        <small class="text-muted">浏览 {{ question.view_count }} 次</small>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="alert alert-info">暂无题目数据</div>
+        {% endfor %}
+
+        <!-- 修改后的分页部分 -->
+        {% if page_obj.has_other_pages %}
+            <nav>
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_difficulty %}difficulty={{ selected_difficulty }}&{% endif %}page={{ page_obj.previous_page_number }}">上一页</a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_difficulty %}difficulty={{ selected_difficulty }}&{% endif %}page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_difficulty %}difficulty={{ selected_difficulty }}&{% endif %}page={{ page_obj.next_page_number }}">下一页</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+{#<!-- templates/baguwen/question_list.html -->#}
+{#{% extends 'baguwen/base.html' %}#}
+{##}
+{#{% block content %}#}
+{#<div class="row">#}
+{#    <div class="col-md-3">#}
+{#        <div class="card">#}
+{#            <div class="card-header">筛选条件</div>#}
+{#            <div class="card-body">#}
+{#                <form method="get">#}
+{#                    <div class="mb-3">#}
+{#                        <input type="text" name="search" class="form-control"#}
+{#                               placeholder="搜索题目..." value="{{ search_query }}">#}
+{#                    </div>#}
+{##}
+{#                    <div class="mb-3">#}
+{#                        <select name="category" class="form-select">#}
+{#                            <option value="">全部分类</option>#}
+{#                            {% for category in categories %}#}
+{#                                <option value="{{ category.id }}"#}
+{#                                    {% if category.id|stringformat:"s" == selected_category %}selected{% endif %}>#}
+{#                                    {{ category.name }}#}
+{#                                </option>#}
+{#                            {% endfor %}#}
+{#                        </select>#}
+{#                    </div>#}
+{##}
+{#                    <div class="mb-3">#}
+{#                        <select name="difficulty" class="form-select">#}
+{#                            <option value="">全部难度</option>#}
+{#                            {% for difficulty in difficulties %}#}
+{#                                <option value="{{ difficulty.id }}"#}
+{#                                    {% if difficulty.id|stringformat:"s" == selected_difficulty %}selected{% endif %}>#}
+{#                                    {{ difficulty.name }}#}
+{#                                </option>#}
+{#                            {% endfor %}#}
+{#                        </select>#}
+{#                    </div>#}
+{##}
+{#                    <button type="submit" class="btn btn-primary">筛选</button>#}
+{#                    <a href="{% url 'baguwen:question_list' %}" class="btn btn-secondary">重置</a>#}
+{#                </form>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <div class="col-md-9">#}
+{#        <h2>八股文题目列表</h2>#}
+{##}
+{#        {% for question in page_obj %}#}
+{#            <div class="card question-card">#}
+{#                <div class="card-body">#}
+{#                    <h5 class="card-title">#}
+{#                        <a href="{% url 'baguwen:question_detail' question.pk %}" class="text-decoration-none">#}
+{#                            {{ question.title }}#}
+{#                        </a>#}
+{#                    </h5>#}
+{#                    <p class="card-text text-muted">{{ question.content|truncatewords:30 }}</p>#}
+{##}
+{#                    <div class="d-flex justify-content-between align-items-center">#}
+{#                        <div>#}
+{#                            <span class="badge bg-secondary">{{ question.category.name }}</span>#}
+{#                            <span class="badge bg-info difficulty-{{ question.difficulty.level }}">#}
+{#                                {{ question.difficulty.name }}#}
+{#                            </span>#}
+{#                            {% for tag in question.get_tags_list %}#}
+{#                                <span class="tag">{{ tag }}</span>#}
+{#                            {% endfor %}#}
+{#                        </div>#}
+{#                        <small class="text-muted">浏览 {{ question.view_count }} 次</small>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#        {% empty %}#}
+{#            <div class="alert alert-info">暂无题目数据</div>#}
+{#        {% endfor %}#}
+{##}
+{#        <!-- 分页 -->#}
+{#        {% if page_obj.has_other_pages %}#}
+{#            <nav>#}
+{#                <ul class="pagination">#}
+{#                    {% if page_obj.has_previous %}#}
+{#                        <li class="page-item">#}
+{#                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">上一页</a>#}
+{#                        </li>#}
+{#                    {% endif %}#}
+{##}
+{#                    {% for num in page_obj.paginator.page_range %}#}
+{#                        <li class="page-item {% if page_obj.number == num %}active{% endif %}">#}
+{#                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>#}
+{#                        </li>#}
+{#                    {% endfor %}#}
+{##}
+{#                    {% if page_obj.has_next %}#}
+{#                        <li class="page-item">#}
+{#                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">下一页</a>#}
+{#                        </li>#}
+{#                    {% endif %}#}
+{#                </ul>#}
+{#            </nav>#}
+{#        {% endif %}#}
+{#    </div>#}
+{#</div>#}
+{#{% endblock %}#}

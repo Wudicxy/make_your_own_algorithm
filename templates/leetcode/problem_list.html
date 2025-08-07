@@ -1,0 +1,464 @@
+
+
+{% extends 'base.html' %}
+{% load query_extras %}
+{% load static %}
+
+{% block title %}LeetCode 练习{% endblock %}
+
+{% block extra_css %}
+    <style>
+        /* 统一字体和间距 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        .filter-card {
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.03);
+            margin-bottom: 24px;
+            background: #fff;
+        }
+
+        .stats-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .stat-badge {
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all .15s ease;
+        }
+
+        .stat-badge.total {
+            background-color: #e7f1ff;
+            color: #0d6efd;
+        }
+
+        .stat-badge.easy {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .stat-badge.medium {
+            background-color: #fff7e6;
+            color: #ef6c00;
+        }
+
+        .stat-badge.hard {
+            background-color: #ffe8e8;
+            color: #c62828;
+        }
+
+        .stat-badge:hover {
+            filter: brightness(0.95);
+        }
+
+        .sort-buttons .btn {
+            font-size: .8rem;
+            padding: 6px 12px;
+        }
+
+        .table thead th {
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 1;
+        }
+
+        .difficulty-tag {
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+            text-transform: capitalize;
+        }
+
+        .difficulty-tag.easy {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .difficulty-tag.medium {
+            background-color: #ff9800;
+            color: white;
+        }
+
+        .difficulty-tag.hard {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .status-btn {
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            border: none;
+            cursor: pointer;
+            min-width: 64px;
+            font-weight: 600;
+            transition: all .15s ease;
+        }
+
+        .status-btn.completed {
+            background-color: #198754;
+            color: white;
+        }
+
+        .status-btn.not-started {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .status-btn:hover {
+            filter: brightness(0.9);
+        }
+
+        /* 掌握度星星 */
+        .mastery-stars {
+            display: inline-flex;
+            gap: 4px;
+            cursor: pointer;
+        }
+
+        .mastery-stars .star {
+            font-size: 16px;
+            line-height: 1;
+            user-select: none;
+            color: #d1d5db;
+            transition: color .2s ease;
+        }
+
+        .mastery-stars .star.filled {
+            color: #ffc107;
+        }
+
+        /* 小按钮微调 */
+        .btn-sm {
+            padding: .35rem .65rem;
+        }
+
+        /* 搜索框和筛选组合 */
+        .filter-row .form-select, .filter-row .form-control {
+            min-width: 140px;
+        }
+
+        /* 响应式：筛选在窄屏换行 */
+        @media (max-width: 992px) {
+            .filter-row {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .sort-buttons {
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container mt-3">
+    <!-- 筛选 + 搜索 -->
+    <!-- 筛选 + 搜索 -->
+    <div class="container mt-3">
+        <!-- 筛选 + 搜索 -->
+        <div class="filter-card">
+            <form method="get" id="filterForm" class="d-flex flex-wrap align-items-end gap-3 filter-row">
+                <!-- 题目类型下拉 -->
+                <select name="question_tag" onchange="this.form.submit()">
+                    <option value="">全部类型</option>
+                    {% for tag in question_tags %}
+                        <option value="{{ tag.id }}"
+                                {% if selected_question_tag == tag.id|stringformat:"s" %}selected{% endif %}>
+                            {{ tag.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <!-- 搜索框 -->
+                <div class="flex-grow-1">
+                    <label class="form-label mb-1 small">搜索</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="search" placeholder="搜索题目名称或编号"
+                               value="{{ search_query }}">
+                        <button class="btn btn-outline-secondary" type="submit" aria-label="搜索">
+                            🔍
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 提交与随机出题按钮 -->
+                <div class="ms-auto d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">提交</button>
+                    <a href="{% url 'random' %}?{{ request.GET.urlencode }}" class="btn btn-outline-secondary">
+                        随机出题
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        </form>
+    </div>
+
+    <!-- 统计徽章 -->
+    <div class="stats-badges">
+        <div class="stat-badge total">
+            已完成 {{ completed_count }}/{{ total_count }}
+        </div>
+        <div class="stat-badge easy" onclick="filterByDifficulty('easy')">
+            简单 {{ easy_count }}
+        </div>
+        <div class="stat-badge medium" onclick="filterByDifficulty('medium')">
+            中等 {{ medium_count }}
+        </div>
+        <div class="stat-badge hard" onclick="filterByDifficulty('hard')">
+            困难 {{ hard_count }}
+        </div>
+    </div>
+
+    <!-- 排序 -->
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div class="sort-buttons btn-group" role="group">
+            <a href="{% url_replace request 'sort' 'difficulty' %}"
+               class="btn btn-sm {% if sort_by == 'difficulty' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                难度 {% get_sort_direction request 'difficulty' %}
+            </a>
+            <a href="{% url_replace request 'sort' 'status' %}"
+               class="btn btn-sm {% if sort_by == 'status' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                状态 {% get_sort_direction request 'status' %}
+            </a>
+            <a href="{% url_replace request 'sort' 'recent' %}"
+               class="btn btn-sm {% if sort_by == 'recent' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                最近考察 {% get_sort_direction request 'recent' %}
+            </a>
+            <a href="{% url_replace request 'sort' 'frequency' %}"
+               class="btn btn-sm {% if sort_by == 'frequency' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                频度 {% get_sort_direction request 'frequency' %}
+            </a>
+            <a href="{% url_replace request 'sort' 'number' %}"
+               class="btn btn-sm {% if sort_by == 'number' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                题号 {% get_sort_direction request 'number' %}
+            </a>
+        </div>
+        <div class="text-muted small">
+            共 {{ total_count }} 道题目，已完成 {{ completed_count }}
+        </div>
+    </div>
+
+    <!-- 题目表格 -->
+    <div class="table-responsive shadow-sm rounded">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="border-bottom">
+            <tr>
+                <th style="width:30px;"><input type="checkbox" id="selectAll"></th>
+                <th>状态</th>
+                <th>题目</th>
+                <th>难度</th>
+                <th>最近考察时间</th>
+                <th>频度</th>
+                <th>掌握程度</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for problem in problems %}
+                <tr>
+                    <td><input type="checkbox" class="problem-check" value="{{ problem.id }}"></td>
+                    <td>
+                        {% if problem.user_record and problem.user_record.status == 'completed' %}
+                            <span class="badge bg-success">完成</span>
+                        {% else %}
+                            <span class="badge bg-secondary">未做</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ problem.leetcode_url }}" target="_blank" class="text-decoration-none">
+                            <strong>{{ problem.number }}.</strong> {{ problem.title }}
+                        </a>
+                    </td>
+                    <td>
+                        <span class="difficulty-tag {{ problem.difficulty }}">
+                            {% if problem.difficulty == 'easy' %}简单
+                            {% elif problem.difficulty == 'medium' %}中等
+                            {% else %}困难{% endif %}
+                        </span>
+                    </td>
+                    <td>{{ problem.last_asked|default:"—"|date:"Y-m-d" }}</td>
+                    <td>{{ problem.max_frequency|default:"0" }}</td>
+                    <td>
+                        <div class="mastery-stars" data-problem-id="{{ problem.id }}">
+                            {% for i in "12345" %}
+                                <span class="star {% if problem.user_record and problem.user_record.mastery >= forloop.counter %}filled{% endif %}"
+                                      data-value="{{ forloop.counter }}">★</span>
+                            {% endfor %}
+                        </div>
+                    </td>
+                    <td class="d-flex gap-1 flex-wrap">
+                        <button class="status-btn {% if problem.user_record and problem.user_record.status == 'completed' %}completed{% else %}not-started{% endif %}"
+                                onclick="toggleStatus(this, {{ problem.id }})">
+                            {% if problem.user_record and problem.user_record.status == 'completed' %}
+                                完成
+                            {% else %}
+                                未做
+                            {% endif %}
+                        </button>
+
+                        <a href="{% url 'notes:edit_note' problem.id %}" class="btn btn-sm btn-outline-secondary">
+                            📝 笔记
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button"
+                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                    更多
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#">查看详情</a></li>
+                                    <li><a class="dropdown-item" href="#">重置记录</a></li>
+                                </ul>
+                            </div>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-muted">
+                        没有找到匹配的题目。
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 分页 -->
+    {% if problems.has_other_pages %}
+        <nav aria-label="分页">
+            <ul class="pagination">
+                {% if problems.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?{% query_transform request page=problems.previous_page_number %}">
+                            上一页
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% for num in problems.paginator.page_range %}
+                    {% if num >= problems.number|add:'-2' and num <= problems.number|add:'2' %}
+                        {% if num == problems.number %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% else %}
+                            <li class="page-item">
+                                <a class="page-link"
+                                   href="?{% query_transform request page=num %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+
+                {% if problems.has_next %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?{% query_transform request page=problems.next_page_number %}">
+                            下一页
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+{% endblock %}
+{% block extra_js %}
+    <script>
+        // 按难度筛选 - 修改这个函数
+        function filterByDifficulty(d) {
+            const u = new URL(location);
+            // 如果当前已经是这个难度，则取消筛选
+            if (u.searchParams.get('difficulty') === d) {
+                u.searchParams.delete('difficulty');
+            } else {
+                u.searchParams.set('difficulty', d);
+            }
+            // 重置页码
+            u.searchParams.delete('page');
+            location = u;
+        }
+
+        // CSRF helper
+        function getCookie(name) {
+            const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+            return m ? m.pop() : '';
+        }
+
+        const csrftoken = getCookie('csrftoken');
+
+        // 切换完成/未做
+        function toggleStatus(btn, problemId) {
+            const done = btn.classList.contains('completed');
+            const newStatus = done ? 'not_started' : 'completed';
+            fetch(`/leetcode/update-status/${problemId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `status=${newStatus}`
+            })
+                .then(r => r.json())
+                .then(j => {
+                    if (j.success) {
+                        btn.classList.toggle('completed', !done);
+                        btn.classList.toggle('not-started', done);
+                        btn.textContent = done ? '未做' : '完成';
+                    }
+                });
+        }
+
+        // 星级掌握度（简化版）
+        document.addEventListener('click', e => {
+            if (!e.target.matches('.mastery-stars .star')) return;
+            const star = e.target,
+                container = star.closest('.mastery-stars'),
+                pid = container.dataset.problemId,
+                val = star.dataset.value;
+            fetch(`/leetcode/update-mastery/${pid}/`, {
+                method: 'POST',
+                headers: {'X-CSRFToken': csrftoken, 'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `mastery=${val}`
+            })
+                .then(r => r.json())
+                .then(j => {
+                    if (j.success) {
+                        container.querySelectorAll('.star').forEach(s => {
+                            s.classList.toggle('filled', s.dataset.value <= val);
+                        });
+                    }
+                });
+        });
+
+        // 按难度筛选
+        function filterByDifficulty(d) {
+            const u = new URL(location);
+            u.searchParams.set('difficulty', d);
+            location = u;
+        }
+
+        // 全选/取消全选
+        document.getElementById('selectAll')?.addEventListener('change', e => {
+            document.querySelectorAll('.problem-check')
+                .forEach(ch => ch.checked = e.target.checked);
+        });
+    </script>
+{% endblock %}

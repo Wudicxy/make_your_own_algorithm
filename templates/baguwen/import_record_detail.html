@@ -1,0 +1,158 @@
+<!-- templates/baguwen/import_record_detail.html -->
+{% extends 'baguwen/base.html' %}
+
+{% block title %}导入记录详情 - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>导入记录详情</h2>
+            <a href="{% url 'baguwen:import_questions' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> 返回导入管理
+            </a>
+        </div>
+
+        <!-- 导入基本信息 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">基本信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>导入类型：</strong></td>
+                                <td>{{ import_record.get_import_type_display }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>文件名：</strong></td>
+                                <td>{{ import_record.file_name|default:"无" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>导入人：</strong></td>
+                                <td>{{ import_record.created_by.username|default:"系统" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>导入时间：</strong></td>
+                                <td>{{ import_record.created_at|date:"Y-m-d H:i:s" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>总数量：</strong></td>
+                                <td><span class="badge bg-info">{{ import_record.total_count }}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>成功数量：</strong></td>
+                                <td><span class="badge bg-success">{{ import_record.success_count }}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>失败数量：</strong></td>
+                                <td><span class="badge bg-danger">{{ import_record.error_count }}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>成功率：</strong></td>
+                                <td>
+                                    {% if import_record.total_count > 0 %}
+                                        {% widthratio import_record.success_count import_record.total_count 100 %}%
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 导入结果统计 -->
+        {% if import_record.total_count > 0 %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">导入结果统计</h5>
+            </div>
+            <div class="card-body">
+                <div class="progress mb-3" style="height: 25px;">
+                    {% if import_record.success_count > 0 %}
+                    <div class="progress-bar bg-success" role="progressbar"
+                         style="width: {% widthratio import_record.success_count import_record.total_count 100 %}%">
+                        成功 {{ import_record.success_count }}
+                    </div>
+                    {% endif %}
+                    {% if import_record.error_count > 0 %}
+                    <div class="progress-bar bg-danger" role="progressbar"
+                         style="width: {% widthratio import_record.error_count import_record.total_count 100 %}%">
+                        失败 {{ import_record.error_count }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <h4 class="text-info">{{ import_record.total_count }}</h4>
+                            <p class="mb-0">总计</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <h4 class="text-success">{{ import_record.success_count }}</h4>
+                            <p class="mb-0">成功</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <h4 class="text-danger">{{ import_record.error_count }}</h4>
+                            <p class="mb-0">失败</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 错误日志 -->
+        {% if import_record.error_log %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0 text-danger">
+                    <i class="fas fa-exclamation-triangle"></i> 错误日志
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <strong>导入过程中发现以下错误：</strong>
+                </div>
+                <pre class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto;">{{ import_record.error_log }}</pre>
+
+                <div class="mt-3">
+                    <h6>常见错误解决方案：</h6>
+                    <ul class="list-unstyled">
+                        <li><strong>分类不存在：</strong> 系统会自动创建新分类</li>
+                        <li><strong>难度格式错误：</strong> 请使用"初级"、"中级"、"高级"、"专家"</li>
+                        <li><strong>必填字段缺失：</strong> 确保title、content、answer、category、difficulty字段完整</li>
+                        <li><strong>JSON格式错误：</strong> 使用在线JSON验证工具检查格式</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
+                <h4 class="text-success mt-3">导入成功！</h4>
+                <p class="text-muted">所有题目都已成功导入系统</p>
+                <a href="{% url 'baguwen:question_list' %}" class="btn btn-primary">
+                    查看题目列表
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}我的笔记{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h2>我的笔记</h2>
+  {% if notes %}
+    <ul class="list-group mt-3">
+      {% for note in notes %}
+      <li class="list-group-item d-flex justify-content-between align-items-start">
+        <div>
+          <strong>{{ note.problem.number }}. {{ note.problem.title }}</strong>
+          <div class="text-muted small">
+            更新于 {{ note.updated_at|date:"Y-m-d H:i" }}
+          </div>
+          <p class="mt-2">{{ note.content|linebreaks|truncatechars:200 }}</p>
+        </div>
+        <div class="ms-3">
+          <a href="{% url 'notes:edit_note' note.problem.id %}" class="btn btn-sm btn-primary">编辑</a>
+          <a href="{% url 'notes:delete_note' note.problem.id %}" class="btn btn-sm btn-danger">删除</a>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-muted mt-3">目前没有笔记，<a href="{% url 'notes:edit_note' 0 %}">添加一条？</a></p>
+  {% endif %}
+</div>
+{% endblock %}

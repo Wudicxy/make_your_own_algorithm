@@ -1,0 +1,75 @@
+{# templates/leetcode/add_problem.html #}
+{% extends 'base.html' %}
+{% load static %}  {# 只加载 static，不再加载 crispy_forms_tags #}
+
+{% block title %}添加新题目{% endblock %}
+
+{% block extra_css %}
+    <style>
+        /* … 你的表单容器样式 … */
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="form-container">
+            <h2 class="mb-4">添加新题目</h2>
+            <form method="post">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+                <div class="mb-3">
+                    {{ form.number.label_tag }}
+                    {{ form.number }}
+                    {{ form.number.errors }}
+                </div>
+                <div class="mb-3">
+                    {{ form.title.label_tag }}
+                    {{ form.title }}
+                    {{ form.title.errors }}
+                </div>
+                <div class="mb-3">
+                    {{ form.difficulty.label_tag }}
+                    {{ form.difficulty }}
+                    {{ form.difficulty.errors }}
+                </div>
+                <div class="mb-3">
+                    {{ form.tags.label_tag }}
+                    {{ form.tags }}
+                    {{ form.tags.errors }}
+                </div>
+                <div class="mb-3">
+                    {{ form.problem_sets.label_tag }}
+                    {{ form.problem_sets }}
+                    {{ form.problem_sets.errors }}
+                </div>
+                <div class="mb-3">
+                    {{ form.companies.label_tag }}
+                    {{ form.companies }}{# ➕ 输入公司名称（若为空默认“练习”） #}
+                    <div class="mb-3">
+                        {{ form.company_name.label_tag }}
+                        {{ form.company_name }}
+                        <small class="form-text text-muted">可直接输入新公司，如未输入则默认为“练习”</small>
+                        {{ form.company_name.errors }}
+                    </div>
+
+                    {# ➕ 输入部门名称（会与上方公司关联） #}
+                    <div class="mb-3">
+                        {{ form.department_name.label_tag }}
+                        {{ form.department_name }}
+                        <small class="form-text text-muted">可选。若填写，会创建或绑定到对应公司下</small>
+                        {{ form.department_name.errors }}
+                    </div>
+
+                    {{ form.companies.errors }}
+                </div>
+                <div class="mb-3">
+                    {{ form.leetcode_url.label_tag }}
+                    {{ form.leetcode_url }}
+                    {{ form.leetcode_url.errors }}
+                </div>
+                <button type="submit" class="btn btn-primary">提交</button>
+                <a href="{% url 'problem_list' %}" class="btn btn-link">取消</a>
+            </form>
+        </div>
+    </div>
+{% endblock %}

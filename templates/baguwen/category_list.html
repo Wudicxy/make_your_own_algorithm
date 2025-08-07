@@ -1,0 +1,86 @@
+<!-- templates/baguwen/category_list.html -->
+{% extends 'baguwen/base.html' %}
+
+{% block title %}分类浏览 - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <!-- 在 question_detail.html 中修改操作按钮部分 -->
+    <div class="d-flex justify-content-between align-items-center mt-4">
+        <div>
+            <!-- 智能返回按钮 -->
+            <button onclick="goBack()" class="btn btn-secondary me-2">
+                <i class="fas fa-arrow-left"></i> 返回
+            </button>
+            <a href="{% url 'baguwen:question_list' %}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-list"></i> 题目列表
+            </a>
+            <a href="{% url 'baguwen:random_question' %}" class="btn btn-primary">
+                <i class="fas fa-random"></i> 随机题目
+            </a>
+        </div>
+        <div>
+            <small class="text-muted">
+                更新时间：{{ question.updated_at|date:"Y-m-d H:i" }}
+            </small>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <h2><i class="fas fa-th-list"></i> 题目分类</h2>
+            <p class="text-muted">按分类浏览八股文题目</p>
+
+            <div class="row">
+                {% for category in categories %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 category-card">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">
+                                    <i class="fas fa-folder-open text-primary"></i>
+                                    {{ category.name }}
+                                </h5>
+                                <p class="card-text text-muted flex-grow-1">
+                                    {{ category.description|default:"暂无描述" }}
+                                </p>
+                                <div class="mt-auto">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-info">{{ category.question_count }} 道题目</span>
+                                        <a href="{% url 'baguwen:question_list' %}?category={{ category.id }}"
+                                           class="btn btn-primary btn-sm">
+                                            浏览题目 <i class="fas fa-arrow-right"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12">
+                        <div class="alert alert-info text-center">
+                            <i class="fas fa-info-circle"></i>
+                            暂无分类数据，<a href="{% url 'baguwen:import_questions' %}">点击这里导入题目</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .category-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            border: 1px solid #dee2e6;
+        }
+
+        .category-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title i {
+            margin-right: 8px;
+        }
+    </style>
+{% endblock %}

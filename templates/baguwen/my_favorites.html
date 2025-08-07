@@ -1,0 +1,200 @@
+<!-- templates/baguwen/my_favorites.html -->
+{% extends 'baguwen/base.html' %}
+
+{% block title %}我的收藏 - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-heart text-danger"></i> 我的收藏</h2>
+            <div>
+                <span class="badge bg-info">共 {{ page_obj.paginator.count }} 道收藏题目</span>
+            </div>
+        </div>
+
+        {% for favorite in page_obj %}
+        <div class="card mb-3 favorite-item">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h5 class="card-title mb-2">
+                            <a href="{% url 'baguwen:question_detail' favorite.question.pk %}"
+                               class="text-decoration-none">
+                                {{ favorite.question.title }}
+                            </a>
+                        </h5>
+                        <p class="card-text text-muted mb-2">
+                            {{ favorite.question.content|truncatewords:20 }}
+                        </p>
+                        <div>
+                            <span class="badge bg-primary me-2">{{ favorite.question.category.name }}</span>
+                            <span class="badge bg-info difficulty-{{ favorite.question.difficulty.level }} me-2">
+                                {{ favorite.question.difficulty.name }}
+                            </span>
+                            {% for tag in favorite.question.get_tags_list %}
+                                <span class="badge bg-light text-dark me-1">{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="mb-2">
+                            <small class="text-muted">
+                                收藏时间：{{ favorite.created_at|date:"Y-m-d H:i" }}
+                            </small>
+                        </div>
+                        <div>
+                            <a href="{% url 'baguwen:question_detail' favorite.question.pk %}"
+                               class="btn btn-primary btn-sm me-2">
+                                <i class="fas fa-eye"></i> 查看
+                            </a>
+                            <button class="btn btn-outline-danger btn-sm remove-favorite"
+                                    data-question-id="{{ favorite.question.pk }}">
+                                <i class="fas fa-heart-broken"></i> 取消收藏
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-5">
+            <i class="fas fa-heart-broken text-muted" style="font-size: 4rem;"></i>
+            <h4 class="text-muted mt-3">还没有收藏任何题目</h4>
+            <p class="text-muted">去 <a href="{% url 'baguwen:question_list' %}">题目列表</a> 收藏一些感兴趣的题目吧！</p>
+            <a href="{% url 'baguwen:random_question' %}" class="btn btn-primary">
+                <i class="fas fa-random"></i> 随机浏览题目
+            </a>
+        </div>
+        {% endfor %}
+
+        <!-- 分页 -->
+        {% if page_obj.has_other_pages %}
+        <nav aria-label="收藏题目分页">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                            <i class="fas fa-chevron-left"></i> 上一页
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                            下一页 <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.favorite-item {
+    transition: all 0.2s ease;
+    border-left: 4px solid #dc3545;
+}
+
+.favorite-item:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transform: translateX(5px);
+}
+
+.difficulty-1 { color: #28a745 !important; }
+.difficulty-2 { color: #ffc107 !important; }
+.difficulty-3 { color: #fd7e14 !important; }
+.difficulty-4 { color: #dc3545 !important; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 取消收藏功能
+    document.querySelectorAll('.remove-favorite').forEach(button => {
+        button.addEventListener('click', function() {
+            const questionId = this.dataset.questionId;
+            const favoriteItem = this.closest('.favorite-item');
+
+            if (confirm('确定要取消收藏这个题目吗？')) {
+                this.disabled = true;
+
+                fetch(`/baguwen/toggle-favorite/${questionId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.is_favorited) {
+                        // 动画移除收藏项
+                        favoriteItem.style.transition = 'all 0.3s ease';
+                        favoriteItem.style.opacity = '0';
+                        favoriteItem.style.transform = 'translateX(-100%)';
+
+                        setTimeout(() => {
+                            favoriteItem.remove();
+
+                            // 检查是否还有收藏项
+                            const remainingItems = document.querySelectorAll('.favorite-item');
+                            if (remainingItems.length === 0) {
+                                location.reload(); // 重新加载显示空状态
+                            }
+                        }, 300);
+
+                        showToast('已取消收藏', 'success');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('操作失败，请重试', 'error');
+                    this.disabled = false;
+                });
+            }
+        });
+    });
+});
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 3000);
+}
+</script>
+
+{% csrf_token %}
+{% endblock %}

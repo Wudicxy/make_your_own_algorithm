@@ -1,0 +1,183 @@
+<!-- templates/baguwen/quick_add.html -->
+{% extends 'baguwen/base.html' %}
+
+{% block title %}快速添加题目 - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>快速添加题目</h2>
+            <a href="{% url 'baguwen:import_questions' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> 返回导入管理
+            </a>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">添加新题目</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">
+                            <strong>题目标题 *</strong>
+                        </label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                            <div class="text-danger small">{{ form.title.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.category.id_for_label }}" class="form-label">
+                                    <strong>分类 *</strong>
+                                </label>
+                                {{ form.category }}
+                                {% if form.category.errors %}
+                                    <div class="text-danger small">{{ form.category.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.difficulty.id_for_label }}" class="form-label">
+                                    <strong>难度 *</strong>
+                                </label>
+                                {{ form.difficulty }}
+                                {% if form.difficulty.errors %}
+                                    <div class="text-danger small">{{ form.difficulty.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.content.id_for_label }}" class="form-label">
+                            <strong>题目内容 *</strong>
+                        </label>
+                        {{ form.content }}
+                        <div class="form-text">详细描述题目要求，可以包含背景信息</div>
+                        {% if form.content.errors %}
+                            <div class="text-danger small">{{ form.content.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.answer.id_for_label }}" class="form-label">
+                            <strong>参考答案 *</strong>
+                        </label>
+                        {{ form.answer }}
+                        <div class="form-text">提供详细的参考答案，可以包含多个要点</div>
+                        {% if form.answer.errors %}
+                            <div class="text-danger small">{{ form.answer.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.key_points.id_for_label }}" class="form-label">
+                            <strong>关键要点</strong>
+                        </label>
+                        {{ form.key_points }}
+                        <div class="form-text">总结答案的关键要点，便于快速复习</div>
+                        {% if form.key_points.errors %}
+                            <div class="text-danger small">{{ form.key_points.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.tags.id_for_label }}" class="form-label">
+                            <strong>标签</strong>
+                        </label>
+                        {{ form.tags }}
+                        <div class="form-text">用逗号分隔多个标签，如：Java,JVM,垃圾回收</div>
+                        {% if form.tags.errors %}
+                            <div class="text-danger small">{{ form.tags.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> 保存题目
+                            </button>
+                            <button type="reset" class="btn btn-secondary">
+                                <i class="fas fa-undo"></i> 重置
+                            </button>
+                        </div>
+                        <div>
+                            <a href="{% url 'baguwen:import_questions' %}" class="btn btn-outline-secondary">
+                                批量导入
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 添加提示 -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-lightbulb text-warning"></i> 添加提示
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>题目编写建议：</h6>
+                        <ul class="small">
+                            <li>标题简洁明了，突出核心问题</li>
+                            <li>内容描述要具体，避免模糊表述</li>
+                            <li>答案要全面，包含原理和实践</li>
+                            <li>关键要点便于快速记忆</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>分类说明：</h6>
+                        <ul class="small">
+                            <li>Java - Java语言相关问题</li>
+                            <li>数据库 - MySQL、Redis等数据库问题</li>
+                            <li>计算机网络 - 网络协议、HTTP等</li>
+                            <li>操作系统 - 进程、线程、内存管理等</li>
+                            <li>算法与数据结构 - 算法原理、复杂度分析</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.form-label {
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.form-text {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+#id_answer {
+    min-height: 150px;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}我的刷题系统{% endblock %}</title>
+    <!-- 引入 favicon，浏览器会自动请求 /static/images/favicon.ico -->
+    {% load static %}
+    <link rel="icon" href="{% static 'images/logo.svg' %}?v=3" type="image/svg+xml">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 图标 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        .difficulty-1 {
+            color: #28a745;
+        }
+
+        .difficulty-2 {
+            color: #ffc107;
+        }
+
+        .difficulty-3 {
+            color: #fd7e14;
+        }
+
+        .difficulty-4 {
+            color: #dc3545;
+        }
+
+        .question-card {
+            margin-bottom: 20px;
+        }
+
+        .tag {
+            background: #f8f9fa;
+            padding: 2px 8px;
+            margin: 2px;
+            border-radius: 3px;
+        }
+
+        /* 返回按钮动画 */
+        .btn-back {
+            transition: all 0.3s ease;
+        }
+
+        .btn-back:hover {
+            transform: translateX(-3px);
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'problem_list' %}">
+            <i class="fas fa-code"></i> 我的刷题系统
+        </a>
+
+        <!-- 导航链接 -->
+        <div class="navbar-nav me-auto">
+            <a class="nav-link" href="{% url 'problem_list' %}">
+                <i class="fas fa-laptop-code"></i> LeetCode
+            </a>
+            <a class="nav-link" href="{% url 'baguwen:question_list' %}">
+                <i class="fas fa-book"></i> 八股文
+            </a>
+            <a class="nav-link" href="{% url 'baguwen:category_list' %}">
+                <i class="fas fa-th-list"></i> 分类
+            </a>
+            <a class="nav-link" href="{% url 'baguwen:import_questions' %}">
+                <i class="fas fa-upload"></i> 导入题目
+            </a>
+            {% if user.is_authenticated %}
+                <a class="nav-link" href="{% url 'baguwen:my_favorites' %}">
+                    <i class="fas fa-heart text-danger"></i> 收藏
+                </a>
+            {% endif %}
+        </div>
+
+        <!-- 右侧按钮 -->
+        <div class="d-flex">
+            <a href="{% url 'baguwen:random_question' %}" class="btn btn-outline-primary btn-sm me-2">
+                <i class="fas fa-dice"></i> 随机八股文
+            </a>
+            <a href="{% url 'add_problem' %}" class="btn btn-success btn-sm">
+                <i class="fas fa-plus"></i> 添加题目
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% block content %}{% endblock %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // 通用返回功能
+    function goBack() {
+        if (document.referrer && document.referrer !== window.location.href) {
+            if (document.referrer.includes(window.location.host)) {
+                window.history.back();
+            } else {
+                window.location.href = "{% url 'problem_list' %}";
+            }
+        } else {
+            window.location.href = "{% url 'problem_list' %}";
+        }
+    }
+
+    // 通用的Toast提示功能
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; max-width: 500px;';
+        toast.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 3000);
+    }
+
+    // 页面加载完成后的初始化
+    document.addEventListener('DOMContentLoaded', function () {
+        // 激活当前页面的导航链接
+        const currentPath = window.location.pathname;
+        const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+
+        navLinks.forEach(link => {
+            if (link.getAttribute('href') === currentPath) {
+                link.classList.add('active');
+            }
+        });
+    });
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!-- templates/baguwen/import_questions.html -->
+{% extends 'baguwen/base.html' %}
+
+{% block title %}题目导入 - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>题目导入管理</h2>
+
+        <!-- 导入方式选择 -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Excel文件导入</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" enctype="multipart/form-data" action="{% url 'baguwen:import_excel' %}">
+                            {% csrf_token %}
+                            {{ excel_form.as_p }}
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'baguwen:download_template' %}" class="btn btn-secondary btn-sm">
+                                    下载模板
+                                </a>
+                                <button type="submit" class="btn btn-primary">上传导入</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>JSON文件导入</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" enctype="multipart/form-data" action="{% url 'baguwen:import_json' %}">
+                            {% csrf_token %}
+                            {{ json_form.as_p }}
+                            <button type="submit" class="btn btn-primary">上传导入</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 手动批量添加 -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>手动批量添加</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{% url 'baguwen:import_manual' %}">
+                            {% csrf_token %}
+                            {{ manual_form.as_p }}
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'baguwen:quick_add' %}" class="btn btn-secondary">
+                                    单个添加
+                                </a>
+                                <button type="submit" class="btn btn-success">批量导入</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 导入记录 -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>最近导入记录</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if import_records %}
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>导入类型</th>
+                                            <th>文件名</th>
+                                            <th>总数量</th>
+                                            <th>成功</th>
+                                            <th>失败</th>
+                                            <th>导入时间</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for record in import_records %}
+                                        <tr>
+                                            <td>{{ record.get_import_type_display }}</td>
+                                            <td>{{ record.file_name|default:"-" }}</td>
+                                            <td>{{ record.total_count }}</td>
+                                            <td class="text-success">{{ record.success_count }}</td>
+                                            <td class="text-danger">{{ record.error_count }}</td>
+                                            <td>{{ record.created_at|date:"Y-m-d H:i" }}</td>
+                                            <td>
+                                                <a href="{% url 'baguwen:import_record_detail' record.pk %}"
+                                                   class="btn btn-sm btn-outline-primary">详情</a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted">暂无导入记录</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

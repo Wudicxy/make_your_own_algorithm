@@ -1,0 +1,286 @@
+<!-- templates/baguwen/question_detail.html -->
+{% extends 'baguwen/base.html' %}
+
+{% block title %}{{ question.title }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-9">
+        <!-- 题目主体内容 -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ question.title }}</h3>
+                    <small class="text-muted">浏览次数：{{ question.view_count }}</small>
+                </div>
+                <div>
+                    {% if user.is_authenticated %}
+                        <button id="favoriteBtn" class="btn btn-outline-danger btn-sm"
+                                data-question-id="{{ question.pk }}"
+                                data-is-favorited="{{ is_favorited|yesno:'true,false' }}">
+                            <i class="fas fa-heart{% if not is_favorited %}-o{% endif %}"></i>
+                            <span>{% if is_favorited %}已收藏{% else %}收藏{% endif %}</span>
+                        </button>
+                    {% else %}
+                        <a href="#" onclick="alert('请先登录')" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-heart-o"></i> 收藏
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card-body">
+                <!-- 题目信息标签 -->
+                <div class="mb-3">
+                    <span class="badge bg-primary me-2">{{ question.category.name }}</span>
+                    <span class="badge bg-info difficulty-{{ question.difficulty.level }} me-2">
+                        {{ question.difficulty.name }}
+                    </span>
+                    {% for tag in question.get_tags_list %}
+                        <span class="badge bg-light text-dark me-1">{{ tag }}</span>
+                    {% endfor %}
+                </div>
+
+                <!-- 题目内容 -->
+                <div class="mb-4">
+                    <h5><i class="fas fa-question-circle text-primary"></i> 题目描述</h5>
+                    <div class="border-start border-primary border-3 ps-3">
+                        <p class="lead">{{ question.content|linebreaks }}</p>
+                    </div>
+                </div>
+
+                <!-- 参考答案 -->
+                <div class="mb-4">
+                    <h5><i class="fas fa-lightbulb text-warning"></i> 参考答案</h5>
+                    <div class="border rounded p-3 bg-light">
+                        <div class="answer-content">
+                            {{ question.answer|linebreaks }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 关键要点 -->
+                {% if question.key_points %}
+                <div class="mb-4">
+                    <h5><i class="fas fa-key text-success"></i> 关键要点</h5>
+                    <div class="alert alert-success">
+                        {{ question.key_points|linebreaks }}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- 操作按钮 -->
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <div>
+                        <a href="{% url 'baguwen:question_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> 返回列表
+                        </a>
+                        <a href="{% url 'baguwen:random_question' %}" class="btn btn-primary">
+                            <i class="fas fa-random"></i> 随机题目
+                        </a>
+                    </div>
+                    <div>
+                        <small class="text-muted">
+                            更新时间：{{ question.updated_at|date:"Y-m-d H:i" }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 侧边栏 -->
+    <div class="col-md-3">
+        <!-- 题目统计 -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-bar"></i> 题目信息</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless">
+                    <tr>
+                        <td>分类：</td>
+                        <td><span class="badge bg-primary">{{ question.category.name }}</span></td>
+                    </tr>
+                    <tr>
+                        <td>难度：</td>
+                        <td><span class="badge bg-info">{{ question.difficulty.name }}</span></td>
+                    </tr>
+                    <tr>
+                        <td>浏览：</td>
+                        <td>{{ question.view_count }} 次</td>
+                    </tr>
+                    <tr>
+                        <td>创建：</td>
+                        <td>{{ question.created_at|date:"Y-m-d" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- 相关题目 -->
+        {% if related_questions %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-link"></i> 相关题目</h6>
+            </div>
+            <div class="card-body">
+                {% for related in related_questions %}
+                <div class="mb-2">
+                    <a href="{% url 'baguwen:question_detail' related.pk %}"
+                       class="text-decoration-none d-block">
+                        <small class="text-primary">{{ related.title|truncatechars:50 }}</small>
+                    </a>
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">{{ related.difficulty.name }}</small>
+                        <small class="text-muted">{{ related.view_count }} 次浏览</small>
+                    </div>
+                    {% if not forloop.last %}<hr class="my-2">{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 快速操作 -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-tools"></i> 快速操作</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'baguwen:random_question' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-random"></i> 随机题目
+                    </a>
+                    <a href="{% url 'baguwen:category_list' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-th-list"></i> 分类浏览
+                    </a>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'baguwen:my_favorites' %}" class="btn btn-outline-warning btn-sm">
+                            <i class="fas fa-star"></i> 我的收藏
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.difficulty-1 { color: #28a745 !important; }
+.difficulty-2 { color: #ffc107 !important; }
+.difficulty-3 { color: #fd7e14 !important; }
+.difficulty-4 { color: #dc3545 !important; }
+
+.answer-content {
+    white-space: pre-wrap;
+    line-height: 1.6;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.border-start {
+    border-left: 3px solid var(--bs-primary) !important;
+}
+
+#favoriteBtn {
+    transition: all 0.3s ease;
+}
+
+#favoriteBtn:hover {
+    transform: scale(1.05);
+}
+
+.table-borderless td {
+    border: none;
+    padding: 0.25rem 0.5rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const favoriteBtn = document.getElementById('favoriteBtn');
+
+    if (favoriteBtn) {
+        favoriteBtn.addEventListener('click', function() {
+            const questionId = this.dataset.questionId;
+            const isFavorited = this.dataset.isFavorited === 'true';
+
+            // 禁用按钮防止重复点击
+            this.disabled = true;
+
+            fetch(`/baguwen/toggle-favorite/${questionId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                const icon = this.querySelector('i');
+                const text = this.querySelector('span');
+
+                if (data.is_favorited) {
+                    icon.className = 'fas fa-heart';
+                    text.textContent = '已收藏';
+                    this.className = 'btn btn-danger btn-sm';
+                    this.dataset.isFavorited = 'true';
+                } else {
+                    icon.className = 'fas fa-heart-o';
+                    text.textContent = '收藏';
+                    this.className = 'btn btn-outline-danger btn-sm';
+                    this.dataset.isFavorited = 'false';
+                }
+
+                // 显示提示消息
+                showToast(data.message, data.is_favorited ? 'success' : 'info');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('操作失败，请重试', 'error');
+            })
+            .finally(() => {
+                this.disabled = false;
+            });
+        });
+    }
+});
+
+function showToast(message, type = 'info') {
+    // 创建toast提示
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    document.body.appendChild(toast);
+
+    // 3秒后自动消失
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 3000);
+}
+</script>
+
+<!-- 添加CSRF token -->
+{% csrf_token %}
+{% endblock %}
